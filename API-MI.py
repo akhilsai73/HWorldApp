@@ -1,20 +1,21 @@
-# Import necessary libraries
+import os
 from azure.search.documents import SearchClient
 from azure.core.exceptions import ClientAuthenticationError
 from azure.identity import ManagedIdentityCredential
 
-# Define Azure Cognitive Search settings
-search_service_name = "test-cognitivesearch01"
-search_index_name = "hotels-sample-index"
+# Retrieve environment variables
+search_service_name = os.getenv("test-cognitivesearch01")
+search_index_name = os.getenv("hotels-sample-index")
 
-# Managed Identity client ID (user-assigned Managed Identity)
-user_assigned_mi_client_id = "mi-28227802bs"  # Replace with your Managed Identity's client ID
+# Check if environment variables are correctly set
+if not search_service_name or not search_index_name:
+    raise ValueError("Please set the SEARCH_SERVICE_NAME and SEARCH_INDEX_NAME environment variables.")
 
 # Build the Azure Search endpoint
 endpoint = f"https://{search_service_name}.search.windows.net"
 
-# Authenticate using Managed Identity (User-assigned Managed Identity)
-credential = ManagedIdentityCredential(client_id=user_assigned_mi_client_id)
+# Authenticate using Managed Identity (System-assigned or User-assigned Managed Identity)
+credential = ManagedIdentityCredential()
 
 # Create a search client
 search_client = SearchClient(endpoint=endpoint, index_name=search_index_name, credential=credential)
