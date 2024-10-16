@@ -1,41 +1,32 @@
 import os
-from azure.search.documents import SearchClient
-from azure.core.exceptions import ClientAuthenticationError
-from azure.identity import ManagedIdentityCredential
 
-# Retrieve environment variables
-search_service_name = os.getenv("test-cognitivesearch01")
-search_index_name = os.getenv("hotels-sample-index")
+from flask import (Flask, redirect, render_template, request,
+                   send_from_directory, url_for)
 
-# Check if environment variables are correctly set
-if not search_service_name or not search_index_name:
-    raise ValueError("Please set the SEARCH_SERVICE_NAME and SEARCH_INDEX_NAME environment variables.")
+app = Flask(__name__)
 
-# Build the Azure Search endpoint
-endpoint = f"https://{search_service_name}.search.windows.net"
 
-# Authenticate using Managed Identity (System-assigned or User-assigned Managed Identity)
-credential = ManagedIdentityCredential()
+@app.route('/')
+def index():
+   print('Request for index page received')
+   return render_template('index.html')
 
-# Create a search client
-search_client = SearchClient(endpoint=endpoint, index_name=search_index_name, credential=credential)
+@app.route('/favicon.ico')
+def favicon():
+    return send_from_directory(os.path.join(app.root_path, 'static'),
+                               'favicon.ico', mimetype='image/vnd.microsoft.icon')
 
-# Function to perform a search query
-def search_documents(query):
-    try:
-        print(f"Searching for: '{query}'\n")
-        results = search_client.search(search_text=query)
-        
-        # Display results and inspect structure
-        for result in results:
-            print(result)
-    
-    except ClientAuthenticationError as e:
-        print("Authentication failed: Please check your Managed Identity and permissions.")
-        print(f"Error details: {e}")
+@app.route('/hello', methods=['POST'])
+def hello():
+   name = request.form.get('name')
 
-# Take user input for search query
-search_query = input("Enter search query: ")
+   if name:
+       print('Request for hello page received with name=%s' % name)
+       return render_template('hello.html', name = name)
+   else:
+       print('Request for hello page received with no name or blank name -- redirecting')
+       return redirect(url_for('index'))
 
-# Perform the search and display the results
-search_documents(search_query)
+
+if __name__ == '__main__':
+   app.run()
